@@ -3,43 +3,37 @@ CREATE DATABASE qa;
 USE qa;
 
 CREATE TABLE question (
+  id INT NOT NULL AUTO_INCREMENT,
   product_id INT,
-  question_id INT NOT NULL AUTO_INCREMENT,
-  question_body VARCHAR(255),
-  question_date VARCHAR(255),
-  asker_name VARCHAR(255),
-  question_helpfulness INT,
-  question_reported BOOLEAN,
+  body VARCHAR(127),
+  date_written VARCHAR(31),
+  asker_name VARCHAR(31),
+  asker_email VARCHAR(63),
+  reported BOOLEAN,
+  helpful INT,
   -- Keys
-  CONSTRAINT PRIMARY KEY (question_id)
+  CONSTRAINT PRIMARY KEY (id)
 )
 
 CREATE TABLE answer (
+  id INT NOT NULL AUTO_INCREMENT,
   question_id INT,
-  answer_id INT NOT NULL AUTO_INCREMENT,
-  answer_body VARCHAR(255),
-  answer_date VARCHAR(255),
-  answerer_name VARCHAR(255),
-  answer_helpfulness INT,
-  answer_reported BOOLEAN,
+  body VARCHAR(127),
+  date_written VARCHAR(31),
+  answerer_name VARCHAR(31),
+  answerer_email VARCHAR(63),
+  reported BOOLEAN,
+  helpful INT,
   -- Keys
-  CONSTRAINT PRIMARY KEY (answer_id),
-  CONSTRAINT FOREIGN KEY (question_id) REFERENCES question (question_id)
-)
-
-CREATE TABLE usernames (
-  user_id_num INT NOT NULL AUTO_INCREMENT,
-  user_handle VARCHAR(255),
-  user_email VARCHAR(255),
-  -- Keys
-  CONSTRAINT PRIMARY KEY (user_id_num)
+  CONSTRAINT PRIMARY KEY (id),
+  CONSTRAINT FOREIGN KEY (question_id) REFERENCES question (id)
 )
 
 CREATE TABLE photos (
+  id INT NOT NULL AUTO_INCREMENT,
   answer_id INT,
-  photo_id INT NOT NULL AUTO_INCREMENT,
-  photo_url VARCHAR(255)
+  url VARCHAR(191)
   -- Keys
-  CONSTRAINT PRIMARY KEY (photo_id)
-  CONSTRAINT FOREIGN KEY (answer_id) REFERENCES answer (answer_id)
+  CONSTRAINT PRIMARY KEY (id)
+  CONSTRAINT FOREIGN KEY (answer_id) REFERENCES answer (id)
 )
