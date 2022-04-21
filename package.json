@@ -1,0 +1,32 @@
+{
+  "name": "questions-and-answers-service",
+  "version": "1.0.0",
+  "description": "QuestionsAndAnswersDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SDC-MTNDEW-SPARK/QuestionsAndAnswersDB.git"
+  },
+  "author": "Elbert Chan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SDC-MTNDEW-SPARK/QuestionsAndAnswersDB/issues"
+  },
+  "homepage": "https://github.com/SDC-MTNDEW-SPARK/QuestionsAndAnswersDB#readme",
+  "dependencies": {
+    "express": "^4.17.3",
+    "mongoose": "^6.3.0",
+    "pg": "^8.7.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.13.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "jest": "^27.5.1",
+    "nodemon": "^2.0.15"
+  }
+}
