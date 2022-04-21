@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/SDC-MTNDEW-SPARK/QuestionsAndAnswersDB#readme",
   "dependencies": {
-    "express": "^4.17.3"
+    "express": "^4.17.3",
+    "mongoose": "^6.3.0",
+    "pg": "^8.7.3"
   },
   "devDependencies": {
     "eslint": "^8.13.0",
