@@ -1,23 +1,37 @@
 const express = require('express');
-const { listQuestions } = require('./postgres/database');
+const { listQuestions, listAnswers, listPhotos } = require('./postgres/database');
 
 const app = express();
 const port = 3000;
 
+// const dateObj = (new Date(1595884714409));
+// console.log(count);
+// console.log(dateObj);
+
 // (1) List Questions
 app.get('/qa/questions', async (req, res) => {
   console.log('Request Received!');
-  const responseObject = await listQuestions(req.query.product_id);
+  const { product_id, page = 1, count = 5 } = req.query;
+  const responseObject = await listQuestions(product_id, page, count);
   res.send(responseObject);
 });
 
 // (2) List Answers
 app.get('/qa/questions/:question_id/answers', async (req, res) => {
   console.log('Request Received!');
-  console.log(req.params.question_id); // Use req.params to access route parameters
-  // const responseObject = await listAnswers(req.query.product_id);
-  // res.send(responseObject);
-  res.send('Hello!');
+  const { question_id } = req.params; // route parameters
+  const { page = 1, count = 5 } = req.query; // query parameters
+  const responseObject = await listAnswers(question_id, page, count);
+  res.send(responseObject);
+});
+
+// (2)(b) List Answers
+app.get('/qa/answers/:answer_id/photos', async (req, res) => {
+  console.log('Request Received!');
+  const { answer_id } = req.params; // route parameters
+  const { page = 1, count = 5 } = req.query; // query parameters
+  const responseObject = await listPhotos(answer_id, page, count);
+  res.send(responseObject);
 });
 
 // (3) Add Question
