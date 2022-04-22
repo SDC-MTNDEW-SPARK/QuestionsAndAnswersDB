@@ -5,23 +5,27 @@ async function listQuestions(productID = 1) {
   const client = new Client({
     database: 'qa',
   });
+  const returnObject = { product_id: productID };
   await client.connect();
-  const res = await client.query(`SELECT * FROM question WHERE product_id = ${Number(productID)};`);
+  const res = await client.query(`SELECT id AS question_id, body AS question_body, date_written AS question_date, asker_name, helpful AS question_helpfulness, reported FROM question WHERE product_id = ${Number(productID)};`);
   console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
+  returnObject.results = res.rows;
   await client.end();
-  return res.rows;
+  return returnObject;
 }
 
 // (2) List Answers, when given a question ID
-async function listAnswers(questionID = 1) {
+async function listAnswers(questionID = 1, page, count) {
   const client = new Client({
     database: 'qa',
   });
+  const returnObject = { question: questionID, page, count };
   await client.connect();
-  const res = await client.query(`SELECT * FROM answer WHERE question_id = ${Number(questionID)} AND reported = false;`);
-  console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
+  const res = await client.query(`SELECT id AS answer_id, body, date_written AS date, answerer_name, helpful AS helpfulness FROM answer WHERE question_id = ${Number(questionID)} AND reported = false;`);
+  console.log(res.rows); // res.rows is an array of "rows" each corresponding to an answer
+  returnObject.results = res.rows;
   await client.end();
-  return res.rows;
+  return returnObject;
 }
 
 // (2)(b) List Photos, when given an answer ID
@@ -30,7 +34,7 @@ async function listPhotos(answerID = 1) {
     database: 'qa',
   });
   await client.connect();
-  const res = await client.query(`SELECT * FROM photos WHERE answer_id = ${Number(answerID)};`);
+  const res = await client.query(`SELECT id, url FROM photos WHERE answer_id = ${Number(answerID)};`);
   console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
   await client.end();
   return res.rows;
@@ -40,7 +44,7 @@ module.exports.listQuestions = listQuestions;
 module.exports.listAnswers = listAnswers;
 module.exports.listPhotos = listPhotos; // only for testing
 
-// Example
+// Example of complete Question response
 // {
 //   "product_id": "5",
 //   "results": [{
@@ -92,6 +96,7 @@ module.exports.listPhotos = listPhotos; // only for testing
 //   ]
 // }
 
+// Example of complete answer response... note the photos array
 // {
 //   "question": "1",
 //   "page": 0,
