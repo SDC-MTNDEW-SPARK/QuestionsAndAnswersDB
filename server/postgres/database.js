@@ -1,29 +1,40 @@
 const { Client } = require('pg');
 
 // (1) List Questions, when given a product ID
-async function listQuestions(productID = 1) {
+async function listQuestions(productID = 1, count = 5) {
   const client = new Client({
     database: 'qa',
   });
   const returnObject = { product_id: productID };
   await client.connect();
-  const res = await client.query(`SELECT id AS question_id, body AS question_body, date_written AS question_date, asker_name, helpful AS question_helpfulness, reported FROM question WHERE product_id = ${Number(productID)};`);
-  console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
+  const res = await client.query(`SELECT id AS question_id, body AS question_body, date_written AS question_date, asker_name, helpful AS question_helpfulness, reported FROM question WHERE product_id = ${Number(productID)} limit ${Number(count)};`);
+  // console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
   returnObject.results = res.rows;
+  // for each resulting question, retrieve an array of answers and store that array in the .answers property in each element of .results
+  await Promise.all(returnObject.results.map((e) => e.question_id).map(async (qid, i) => {
+    const answers = await listAnswers(qid);
+    console.log(answers.results);
+    returnObject.results[i].answers = answers.results;
+  }));
   await client.end();
   return returnObject;
 }
 
 // (2) List Answers, when given a question ID
-async function listAnswers(questionID = 1, page, count) {
+async function listAnswers(questionID = 1, page = 0, count = 5) {
   const client = new Client({
     database: 'qa',
   });
   const returnObject = { question: questionID, page, count };
   await client.connect();
-  const res = await client.query(`SELECT id AS answer_id, body, date_written AS date, answerer_name, helpful AS helpfulness FROM answer WHERE question_id = ${Number(questionID)} AND reported = false;`);
-  console.log(res.rows); // res.rows is an array of "rows" each corresponding to an answer
+  const res = await client.query(`SELECT id AS answer_id, body, date_written AS date, answerer_name, helpful AS helpfulness FROM answer WHERE question_id = ${Number(questionID)} AND reported = false limit ${Number(count)};`);
+  // console.log(res.rows); // res.rows is an array of "rows" each corresponding to an answer
   returnObject.results = res.rows;
+  await Promise.all(returnObject.results.map((e) => e.answer_id).map(async (aid, i) => {
+    const photos = await listPhotos(aid);
+    console.log(photos);
+    returnObject.results[i].photos = photos;
+  }));
   await client.end();
   return returnObject;
 }
