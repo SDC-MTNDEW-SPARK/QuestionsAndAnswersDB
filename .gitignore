@@ -102,3 +102,11 @@ dist
 
 # TernJS port file
 .tern-port
+
+# CSV data for project
+csv/
+
+# Other
+.vscode/
+.DS_Store
+

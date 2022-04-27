@@ -1,0 +1,45 @@
+03:55 PM ~/hackreactor/questionsandanswersdb/csv $ psql qa
+psql (14.2)
+Type "help" for help.
+
+qa=# \dt
+          List of relations
+ Schema |   Name   | Type  |  Owner
+--------+----------+-------+----------
+ public | answer   | table | elbert12
+ public | photos   | table | elbert12
+ public | question | table | elbert12
+(3 rows)
+
+qa=# COPY question
+qa-# FROM '/Users/elbert12/hackreactor/questionsandanswersdb/csv/questions.csv'
+qa-# DELIMITER ',' CSV HEADER;
+COPY 3518963
+qa=# \dt
+          List of relations
+ Schema |   Name   | Type  |  Owner
+--------+----------+-------+----------
+ public | answer   | table | elbert12
+ public | photos   | table | elbert12
+ public | question | table | elbert12
+(3 rows)
+
+qa=# select count(*) from question;
+  count
+---------
+ 3518963
+(1 row)
+
+qa=# COPY answer
+qa-# FROM '/Users/elbert12/hackreactor/questionsandanswersdb/csv/answers.csv'
+qa-# DELIMITER ',' CSV HEADER;
+COPY 6879306
+qa=# COPY photos
+qa-# FROM '/Users/elbert12/hackreactor/questionsandanswersdb/csv/photos.csv'
+qa-# DELIMITER ',' CSV HEADER;
+ERROR:  extra data after last expected column
+CONTEXT:  COPY photos, line 2: "1,1,"https://images.unsplash.com/photo-1501088430049-71c79fa3283e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOj..."
+qa=# COPY photos
+FROM '/Users/elbert12/hackreactor/questionsandanswersdb/csv/answers_photos.csv'
+DELIMITER ',' CSV HEADER;
+COPY 2063759
