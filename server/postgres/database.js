@@ -1,13 +1,23 @@
 const { Client } = require('pg');
 
 // (1) List Questions, when given a product ID
-async function listQuestions(productID = 1, count = 5) {
+async function listQuestionsOFF(productID = 1, count = 5) {
   const client = new Client({
     database: 'qa',
   });
   const returnObject = { product_id: productID };
   await client.connect();
-  const res = await client.query(`SELECT id AS question_id, body AS question_body, date_written AS question_date, asker_name, helpful AS question_helpfulness, reported FROM question WHERE product_id = ${Number(productID)} limit ${Number(count)};`);
+  const res = await client.query(`
+    SELECT
+        id AS question_id,
+        body AS question_body,
+        to_json(to_timestamp(cast(date_written as decimal)/1000)) AS question_date,
+        asker_name,
+        helpful AS question_helpfulness, reported
+    FROM question
+    WHERE product_id = ${Number(productID)}
+    LIMIT ${Number(count)};
+  `);
   // console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
   returnObject.results = res.rows;
   // for each resulting question, retrieve an array of answers and store that array in the .answers property in each element of .results
@@ -20,6 +30,62 @@ async function listQuestions(productID = 1, count = 5) {
   return returnObject;
 }
 
+// Revision of (1) List Questions, when given a product ID
+async function listQuestions(productID = 1, count = 5) {
+  const client = new Client({
+    database: 'qa',
+  });
+  const returnObject = { product_id: productID };
+  await client.connect();
+  const res = await client.query(`
+    SELECT
+        question.id question_id,
+        question.body question_body,
+        to_json(to_timestamp(cast(question.date_written as decimal)/1000)) question_date,
+        question.asker_name,
+        question.helpful question_helpfulness,
+        question.reported,
+        COALESCE(json_object_agg(ap.id,
+          json_build_object(
+            'answer_id', ap.id,
+            'body', ap.body,
+            'date', to_json(to_timestamp(cast(ap.date_written as decimal)/1000)),
+            'answerer_name', ap.answerer_name,
+            'helpfulness', ap.helpful,
+            'photos', ap.photographs
+          )
+        ) FILTER (WHERE ap.id IS NOT NULL), '{}') answers
+    FROM question
+    LEFT JOIN (
+      SELECT
+        question_id,
+        answer.id id,
+        answer.body body,
+        answer.date_written date_written,
+        answer.answerer_name answerer_name,
+        answer.helpful helpful,
+        COALESCE(json_agg(
+          json_build_object(
+            'id', photos.id,
+            'url', photos.url
+          )
+        ) FILTER (WHERE photos.id IS NOT NULL), '[]') photographs
+      FROM
+        answer
+        LEFT JOIN photos
+        ON answer.id = photos.answer_id
+        GROUP BY answer.id
+    ) ap ON question.id = ap.question_id
+    WHERE product_id = ${Number(productID)}
+    GROUP BY question.id
+    LIMIT ${Number(count)};
+  `);
+  // console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
+  returnObject.results = res.rows;
+  await client.end();
+  return returnObject;
+}
+
 // (2) List Answers, when given a question ID
 async function listAnswers(questionID = 1, page = 0, count = 5) {
   const client = new Client({
@@ -27,7 +93,18 @@ async function listAnswers(questionID = 1, page = 0, count = 5) {
   });
   const returnObject = { question: questionID, page, count };
   await client.connect();
-  const res = await client.query(`SELECT id AS answer_id, body, date_written AS date, answerer_name, helpful AS helpfulness FROM answer WHERE question_id = ${Number(questionID)} AND reported = false limit ${Number(count)};`);
+  const res = await client.query(`
+    SELECT
+      id AS answer_id,
+      body,
+      to_json(to_timestamp(cast(date_written as decimal)/1000)) AS date,
+      answerer_name,
+      helpful AS helpfulness
+    FROM answer
+    WHERE question_id = ${Number(questionID)}
+      AND reported = false
+    LIMIT ${Number(count)};
+  `);
   // console.log(res.rows); // res.rows is an array of "rows" each corresponding to an answer
   returnObject.results = res.rows;
   await Promise.all(returnObject.results.map((e) => e.answer_id).map(async (aid, i) => {
@@ -51,9 +128,91 @@ async function listPhotos(answerID = 1) {
   return res.rows;
 }
 
-module.exports.listQuestions = listQuestions;
-module.exports.listAnswers = listAnswers;
-module.exports.listPhotos = listPhotos; // only for testing
+// (3) Add Question
+// This current does not work because of some issue with auto_increment
+async function addQuestion(body, name, email, product_id) {
+  const client = new Client({
+    database: 'qa',
+  });
+  await client.connect();
+  const query = `INSERT INTO question (product_id, body, date_written, asker_name, asker_email, reported, helpful) VALUES (${product_id}, ${body}, 'dsf8lksdjhf', ${name}, ${email}, false, 0);`;
+  const res = await client.query(query); // replace with an insert into
+  await client.end();
+  return res;
+}
+
+// (4) Add Answer
+// This current does not work because of some issue with auto_increment
+async function addAnswer(question_id, body, name, email, photos) {
+  const client = new Client({
+    database: 'qa',
+  });
+  await client.connect();
+  const query = `INSERT INTO answer (question_id, body, date_written, answerer_name, answerer_email, reported, helpful) VALUES (${question_id}, ${body}, 'dsf8lksdjhf', ${name}, ${email}, false, 0);`;
+  const res = await client.query(query); // replace with an insert into
+  await client.end();
+  return res;
+}
+
+// (5) Mark Question Helpful
+async function markQuestionHelpful(question_id) {
+  const client = new Client({
+    database: 'qa',
+  });
+  await client.connect();
+  const query = `UPDATE question SET helpful = helpful + 1 where id = ${question_id};`;
+  const res = await client.query(query);
+  await client.end();
+  return res;
+}
+
+// (6) Report Question
+async function reportQuestion(question_id) {
+  const client = new Client({
+    database: 'qa',
+  });
+  await client.connect();
+  const query = `UPDATE question SET reported = true where id = ${question_id};`;
+  const res = await client.query(query);
+  await client.end();
+  return res;
+}
+
+// (7) Mark Answer as Helpful
+async function markAnswerHelpful(answer_id) {
+  const client = new Client({
+    database: 'qa',
+  });
+  await client.connect();
+  const query = `UPDATE answer SET helpful = helpful + 1 where id = ${answer_id};`;
+  const res = await client.query(query);
+  await client.end();
+  return res;
+}
+
+// (8) Report Answer
+async function reportAnswer(answer_id) {
+  const client = new Client({
+    database: 'qa',
+  });
+  await client.connect();
+  const query = `UPDATE answer SET reported = true WHERE id = ${answer_id};`;
+  const res = await client.query(query);
+  await client.end();
+  return res;
+}
+
+module.exports = {
+  listQuestions,
+  listAnswers,
+  listPhotos, // only for testing
+  addQuestion,
+  addAnswer,
+  markQuestionHelpful,
+  reportQuestion,
+  markAnswerHelpful,
+  reportAnswer,
+};
 
 // Example of complete Question response
 // {
