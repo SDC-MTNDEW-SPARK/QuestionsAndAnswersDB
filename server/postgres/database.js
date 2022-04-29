@@ -1,13 +1,26 @@
-const { Client } = require('pg');
+const { Client, Pool } = require('pg');
+require('dotenv').config();
 
-// (1) List Questions, when given a product ID
+const credentials = {
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  dbname: process.env.PGDATABASE,
+  password: process.env.PG_PASS,
+  port: process.env.PGPORT,
+};
+
+console.log('process.env.PG_USER', process.env.PGUSER);
+console.log('process.env.PGHOST', process.env.PGHOST);
+console.log('process.env.PG_DB,', process.env.PGDATABASE);
+console.log('process.env.PG_ENDPOINT,', process.env.PGPORT);
+
+const pool = new Pool(credentials);
+
+// (1) List Questions, when given a product ID... Object-Built-By-JavaScript-Version
 async function listQuestionsOFF(productID = 1, count = 5) {
-  const client = new Client({
-    database: 'qa',
-  });
   const returnObject = { product_id: productID };
-  await client.connect();
-  const res = await client.query(`
+  // await client.connect();
+  const res = await pool.query(`
     SELECT
         id AS question_id,
         body AS question_body,
@@ -26,18 +39,15 @@ async function listQuestionsOFF(productID = 1, count = 5) {
     console.log(answers.results);
     returnObject.results[i].answers = answers.results;
   }));
-  await client.end();
+  // await client.end();
   return returnObject;
 }
 
 // Revision of (1) List Questions, when given a product ID
 async function listQuestions(productID = 1, count = 5) {
-  const client = new Client({
-    database: 'qa',
-  });
   const returnObject = { product_id: productID };
-  await client.connect();
-  const res = await client.query(`
+  // await client.connect();
+  const res = await pool.query(`
     SELECT
         question.id question_id,
         question.body question_body,
@@ -58,7 +68,7 @@ async function listQuestions(productID = 1, count = 5) {
     FROM question
     LEFT JOIN (
       SELECT
-        question_id,
+        answer.question_id,
         answer.id id,
         answer.body body,
         answer.date_written date_written,
@@ -80,20 +90,20 @@ async function listQuestions(productID = 1, count = 5) {
     GROUP BY question.id
     LIMIT ${Number(count)};
   `);
-  // console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
+  // console.log(res);
   returnObject.results = res.rows;
-  await client.end();
+  // await pool.end();
   return returnObject;
 }
 
 // (2) List Answers, when given a question ID
 async function listAnswers(questionID = 1, page = 0, count = 5) {
-  const client = new Client({
-    database: 'qa',
-  });
+  // const client = new Client({
+  //   database: 'qa',
+  // });
   const returnObject = { question: questionID, page, count };
-  await client.connect();
-  const res = await client.query(`
+  // await pool.connect();
+  const res = await pool.query(`
     SELECT
       id AS answer_id,
       body,
@@ -112,19 +122,19 @@ async function listAnswers(questionID = 1, page = 0, count = 5) {
     console.log(photos);
     returnObject.results[i].photos = photos;
   }));
-  await client.end();
+  // await client.end();
   return returnObject;
 }
 
 // (2)(b) List Photos, when given an answer ID
 async function listPhotos(answerID = 1) {
-  const client = new Client({
-    database: 'qa',
-  });
-  await client.connect();
-  const res = await client.query(`SELECT id, url FROM photos WHERE answer_id = ${Number(answerID)};`);
-  console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
-  await client.end();
+  // const client = new Client({
+  //   database: 'qa',
+  // });
+  // await client.connect();
+  const res = await pool.query(`SELECT id, url FROM photos WHERE answer_id = ${Number(answerID)};`);
+  // console.log(res.rows); // res.rows is an array of "rows" each corresponding to a question
+  // await client.end();
   return res.rows;
 }
 
