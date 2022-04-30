@@ -10,12 +10,15 @@ const {
   markAnswerHelpful,
   reportAnswer,
 } = require('./postgres/database');
+const path = require('path');
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(express.static(path.join(__dirname, '/../public')));
 
 // (1) List Questions
 app.get('/qa/questions', async (req, res) => {

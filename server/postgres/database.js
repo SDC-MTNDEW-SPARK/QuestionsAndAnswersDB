@@ -17,7 +17,7 @@ console.log('process.env.PG_ENDPOINT,', process.env.PGPORT);
 const pool = new Pool(credentials);
 
 // (1) List Questions, when given a product ID... Object-Built-By-JavaScript-Version
-async function listQuestionsOFF(productID = 1, count = 5) {
+async function listQuestions(productID = 1, count = 5) {
   const returnObject = { product_id: productID };
   // await client.connect();
   const res = await pool.query(`
@@ -44,9 +44,9 @@ async function listQuestionsOFF(productID = 1, count = 5) {
 }
 
 // Revision of (1) List Questions, when given a product ID
-async function listQuestions(productID = 1, count = 5) {
+async function listQuestionsOFF(productID = 1, count = 5) {
   const returnObject = { product_id: productID };
-  // await client.connect();
+  // await client.connect()
   const res = await pool.query(`
     SELECT
         question.id question_id,
