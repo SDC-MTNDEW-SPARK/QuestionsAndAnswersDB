@@ -36,7 +36,7 @@ async function listQuestions(productID = 1, count = 5) {
   // for each resulting question, retrieve an array of answers and store that array in the .answers property in each element of .results
   await Promise.all(returnObject.results.map((e) => e.question_id).map(async (qid, i) => {
     const answers = await listAnswers(qid);
-    console.log(answers.results);
+    // console.log(answers.results);
     returnObject.results[i].answers = answers.results;
   }));
   // await client.end();
@@ -119,7 +119,7 @@ async function listAnswers(questionID = 1, page = 0, count = 5) {
   returnObject.results = res.rows;
   await Promise.all(returnObject.results.map((e) => e.answer_id).map(async (aid, i) => {
     const photos = await listPhotos(aid);
-    console.log(photos);
+    // console.log(photos);
     returnObject.results[i].photos = photos;
   }));
   // await client.end();
